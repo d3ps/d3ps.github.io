@@ -1,16 +1,9 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /** @jsx React.DOM */
 
-function p(n) {
-  return (+n).toLocaleString();
-}
-
-function pr(n) {
-  return p(Math.round(+n));
-}
-
 var Panel = require('./panel'),
-    FormGroup = require('./form-group');
+    FormGroup = require('./form-group'),
+    FormControlStatic = require('./form-control-static');
 
 var CharacterStats = React.createClass({displayName: 'CharacterStats',
   render: function () {
@@ -20,32 +13,32 @@ var CharacterStats = React.createClass({displayName: 'CharacterStats',
           FormGroup({for: "primaryAttribute", label: "Primary Attribute"}, 
             React.DOM.input({type: "text", id: "primaryAttribute", value: this.props.primaryAttribute, className: "form-control"})
           ), 
-          FormGroup({for: "attackSpeed", label: "Attack Speed"}, 
+          FormGroup({for: "attackSpeed", label: "Attack Speed", suffix: "%"}, 
             React.DOM.input({type: "text", id: "attackSpeed", value: this.props.attackSpeed, className: "form-control"})
           ), 
-          FormGroup({for: "critChance", label: "Critical Hit Chance"}, 
+          FormGroup({for: "critChance", label: "Critical Hit Chance", suffix: "%"}, 
             React.DOM.input({type: "text", id: "critChance", value: this.props.critChance, className: "form-control"})
           ), 
-          FormGroup({for: "critDamage", label: "Critical Hit Damage"}, 
+          FormGroup({for: "critDamage", label: "Critical Hit Damage", suffix: "%"}, 
             React.DOM.input({type: "text", id: "critDamage", value: this.props.critDamage, className: "form-control"})
           ), 
-          FormGroup({for: "passiveDamage", label: "Passive Damage"}, 
+          FormGroup({for: "passiveDamage", label: "Passive Damage", suffix: "%"}, 
             React.DOM.input({type: "text", id: "passiveDamage", value: this.props.passiveDamage, className: "form-control"})
           ), 
-          FormGroup({for: "elementalDamage", label: "Elemental Damage"}, 
+          FormGroup({for: "elementalDamage", label: "Elemental Damage", suffix: "%"}, 
             React.DOM.input({type: "text", id: "elementalDamage", value: this.props.elementalDamage, className: "form-control"})
           ), 
-          FormGroup({for: "eliteDamage", label: "Elite Damage"}, 
+          FormGroup({for: "eliteDamage", label: "Elite Damage", suffix: "%"}, 
             React.DOM.input({type: "text", id: "eliteDamage", value: this.props.eliteDamage, className: "form-control"})
           ), 
           FormGroup({label: "Sheet Damage"}, 
-            React.DOM.p({className: "form-control-static", title: 'Exact: ' + p(this.props.sheetDamage)}, pr(this.props.sheetDamage))
+            FormControlStatic({value: this.props.sheetDamage})
           ), 
           FormGroup({label: "× Elemental"}, 
-            React.DOM.p({className: "form-control-static", title: 'Exact: ' + p(this.props.sheetElementalDamage)}, pr(this.props.sheetElementalDamage))
+            FormControlStatic({value: this.props.sheetElementalDamage})
           ), 
           FormGroup({label: "× Elite"}, 
-            React.DOM.p({className: "form-control-static", title: 'Exact: ' + p(this.props.eliteElementalDamage)}, pr(this.props.eliteElementalDamage))
+            FormControlStatic({value: this.props.eliteElementalDamage})
           )
         )
       )
@@ -55,25 +48,125 @@ var CharacterStats = React.createClass({displayName: 'CharacterStats',
 
 module.exports = CharacterStats;
 
-},{"./form-group":2,"./panel":5}],2:[function(require,module,exports){
+},{"./form-control-static":4,"./form-group":5,"./panel":8}],2:[function(require,module,exports){
 /** @jsx React.DOM */
 
-var FormGroup = React.createClass({displayName: 'FormGroup',
+var Panel = require('./panel'),
+    FormGroup = require('./form-group'),
+    FormControlStatic = require('./form-control-static'),
+    Definition = require('./definition'),
+    Character = require('../models/character');
+
+var DamagePerStat = React.createClass({displayName: 'DamagePerStat',
   render: function () {
+    var c = this.props.character,
+        sheetDamage = c.sheetDamage,
+        sheetElementalDamage = c.sheetElementalDamage,
+        eliteElementalDamage = c.eliteElementalDamage,
+        weaponDamage = new Character(c, 'weapon1MinDamage').sheetDamage,
+        primaryAttribute = new Character(c, 'primaryAttribute').sheetDamage,
+        critChance = new Character(c, 'critChance', 0.5).sheetDamage,
+        critDamage = new Character(c, 'critDamage').sheetDamage,
+        attackSpeed = new Character(c, 'attackSpeed').sheetDamage,
+        passiveDamage = new Character(c, 'passiveDamage').sheetDamage,
+        elementalDamage = new Character(c, 'elementalDamage').sheetElementalDamage,
+        eliteDamage = new Character(c, 'eliteDamage').eliteElementalDamage;
     return (
-      React.DOM.div({className: "form-group"}, 
-        React.DOM.label({for: this.props.for, className: "col-sm-3 col-md-5 col-lg-4 control-label"}, this.props.label), 
-        React.DOM.div({className: "col-sm-9 col-md-7 col-lg-8"}, 
-          this.props.children
+      React.DOM.div({className: "col-md-6"}, 
+        Panel({heading: "Damage per Stat"}, 
+          React.DOM.p(null, "Each number represents how much damage you will gain by increasing the specified stat by 1."), 
+          React.DOM.p(null, "Critical Hit Chance damage is based on an increase of 0.5 instead of 1."), 
+          React.DOM.dl({className: "dl-horizontal"}, 
+            React.DOM.dt(null, "Weapon Damage"), 
+            Definition({value: weaponDamage - sheetDamage}), 
+            React.DOM.dt(null, "Primary Attribute"), 
+            Definition({value: primaryAttribute - sheetDamage}), 
+            React.DOM.dt(null, "Critical Hit Chance"), 
+            Definition({value: critChance - sheetDamage}), 
+            React.DOM.dt(null, "Critical Hit Damage"), 
+            Definition({value: critDamage - sheetDamage}), 
+            React.DOM.dt(null, "Attack Speed"), 
+            Definition({value: attackSpeed - sheetDamage}), 
+            React.DOM.dt(null, "Passive Damage"), 
+            Definition({value: passiveDamage - sheetDamage}), 
+            React.DOM.dt(null, "× Elemental"), 
+            Definition({value: elementalDamage - sheetElementalDamage}), 
+            React.DOM.dt(null, "× Elite"), 
+            Definition({value: eliteDamage - eliteElementalDamage})
+          )
         )
       )
     );
   }
 });
 
+module.exports = DamagePerStat;
+
+},{"../models/character":11,"./definition":3,"./form-control-static":4,"./form-group":5,"./panel":8}],3:[function(require,module,exports){
+/** @jsx React.DOM */
+
+var Definition = React.createClass({displayName: 'Definition',
+  render: function () {
+    var precision = +this.props.precision,
+        exact = this.props.value.toLocaleString(),
+        rounded = (+this.props.value.toFixed(precision)).toLocaleString();
+    return (
+      React.DOM.dd({title: 'Exact: ' + exact}, rounded)
+    );
+  }
+});
+
+module.exports = Definition;
+
+},{}],4:[function(require,module,exports){
+/** @jsx React.DOM */
+
+var FormControlStatic = React.createClass({displayName: 'FormControlStatic',
+  render: function () {
+    var precision = +this.props.precision,
+        exact = this.props.value.toLocaleString(),
+        rounded = (+this.props.value.toFixed(precision)).toLocaleString();
+    return (
+      React.DOM.p({className: "form-control-static", title: 'Exact: ' + exact}, rounded)
+    );
+  }
+});
+
+module.exports = FormControlStatic;
+
+},{}],5:[function(require,module,exports){
+/** @jsx React.DOM */
+
+var FormGroup = React.createClass({displayName: 'FormGroup',
+  render: function () {
+    if (this.props.suffix) {
+      return (
+        React.DOM.div({className: "form-group"}, 
+          React.DOM.label({for: this.props.for, className: "col-sm-3 col-md-5 col-lg-4 control-label"}, this.props.label), 
+          React.DOM.div({className: "col-sm-9 col-md-7 col-lg-8"}, 
+            React.DOM.div({className: "input-group"}, 
+              this.props.children, 
+              React.DOM.span({className: "input-group-addon"}, this.props.suffix)
+            )
+          )
+        )
+      );
+    } else {
+      return (
+        React.DOM.div({className: "form-group"}, 
+          React.DOM.label({for: this.props.for, className: "col-sm-3 col-md-5 col-lg-4 control-label"}, this.props.label), 
+          React.DOM.div({className: "col-sm-9 col-md-7 col-lg-8"}, 
+            this.props.children
+          )
+        )
+      );
+    }
+  }
+});
+
 module.exports = FormGroup;
 
-},{}],3:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 /** @jsx React.DOM */
 
 var Header = React.createClass({displayName: 'Header',
@@ -88,92 +181,56 @@ var Header = React.createClass({displayName: 'Header',
 
 module.exports = Header;
 
-},{}],4:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 /** @jsx React.DOM */
-
-function pct(n) {
-  return +n * 0.01;
-}
-
-function calcAttacksPerSecond(a, b) {
-  if (b) {
-    return (2 * +a * +b) / (+a + +b);
-  } else {
-    return +a;
-  }
-}
-
-function calcSheetDamage(x) {
-  var s = 1 + pct(x.primaryAttribute),
-      c = 1 + (pct(x.critChance) * pct(x.critDamage)),
-      r = (1 + pct(x.attackSpeed)) * calcAttacksPerSecond(x.weapon1AttacksPerSecond, x.weapon2AttacksPerSecond),
-      a = (+x.weapon1MinDamage + +x.weapon1MaxDamage + +x.weapon2MinDamage + +x.weapon2MaxDamage) / (x.weapon2AttacksPerSecond ? 4.0 : 2.0),
-      m = 1 + pct(x.passiveDamage);
-  return s * c * r * a * m;
-}
 
 var Header = require('./header'),
     Row = require('./row'),
     Weapon = require('./weapon'),
-    CharacterStats = require('./character-stats');
+    CharacterStats = require('./character-stats'),
+    DamagePerStat = require('./damage-per-stat'),
+    Character = require('../models/character');
 
 var Page = React.createClass({displayName: 'Page',
   getInitialState: function () {
-    return {
-      weapon1MinDamage: 1343,
-      weapon1MaxDamage: 1841,
-      weapon1AttacksPerSecond: 1.47,
-      weapon2MinDamage: 1287,
-      weapon2MaxDamage: 1763,
-      weapon2AttacksPerSecond: 1.4,
-      primaryAttribute: 7490,
-      attackSpeed: 46.4,
-      critChance: 41.5,
-      critDamage: 423,
-      passiveDamage: 8,
-      elementalDamage: 54,
-      eliteDamage: 0
-    };
+    return { character: new Character() };
   },
   handleChange: function (e) {
-    var state = {};
-    state[e.target.id] = e.target.value
-    this.setState(state);
+    var character = new Character(this.state.character);
+    character[e.target.id] = e.target.value;
+    this.setState({ character: character });
   },
   render: function () {
-    var dps1 = +this.state.weapon1AttacksPerSecond * (+this.state.weapon1MinDamage + +this.state.weapon1MaxDamage) / 2.0,
-        dps2 = +this.state.weapon2AttacksPerSecond * (+this.state.weapon2MinDamage + +this.state.weapon2MaxDamage) / 2.0,
-        sheetDamage = calcSheetDamage(this.state),
-        sheetElementalDamage = sheetDamage * (1 + pct(this.state.elementalDamage)),
-        eliteElementalDamage = sheetElementalDamage * (1 + pct(this.state.eliteDamage));
+    var c = this.state.character;
     return (
       React.DOM.div({className: "container"}, 
         Header(null), 
         React.DOM.form({className: "form-horizontal", onChange: this.handleChange}, 
           Row(null, 
             Weapon({number: "1", 
-                minDamage: this.state.weapon1MinDamage, 
-                maxDamage: this.state.weapon1MaxDamage, 
-                attacksPerSecond: this.state.weapon1AttacksPerSecond, 
-                dps: dps1}), 
+                minDamage: c.weapon1MinDamage, 
+                maxDamage: c.weapon1MaxDamage, 
+                attacksPerSecond: c.weapon1AttacksPerSecond, 
+                dps: c.weapon1DPS}), 
             Weapon({number: "2", 
-                minDamage: this.state.weapon2MinDamage, 
-                maxDamage: this.state.weapon2MaxDamage, 
-                attacksPerSecond: this.state.weapon2AttacksPerSecond, 
-                dps: dps2})
+                minDamage: c.weapon2MinDamage, 
+                maxDamage: c.weapon2MaxDamage, 
+                attacksPerSecond: c.weapon2AttacksPerSecond, 
+                dps: c.weapon2DPS})
           ), 
           Row(null, 
             CharacterStats({
-                primaryAttribute: this.state.primaryAttribute, 
-                attackSpeed: this.state.attackSpeed, 
-                critChance: this.state.critChance, 
-                critDamage: this.state.critDamage, 
-                passiveDamage: this.state.passiveDamage, 
-                elementalDamage: this.state.elementalDamage, 
-                eliteDamage: this.state.eliteDamage, 
-                sheetDamage: sheetDamage, 
-                sheetElementalDamage: sheetElementalDamage, 
-                eliteElementalDamage: eliteElementalDamage})
+                primaryAttribute: c.primaryAttribute, 
+                attackSpeed: c.attackSpeed, 
+                critChance: c.critChance, 
+                critDamage: c.critDamage, 
+                passiveDamage: c.passiveDamage, 
+                elementalDamage: c.elementalDamage, 
+                eliteDamage: c.eliteDamage, 
+                sheetDamage: c.sheetDamage, 
+                sheetElementalDamage: c.sheetElementalDamage, 
+                eliteElementalDamage: c.eliteElementalDamage}), 
+            DamagePerStat({character: c})
           )
         )
       )
@@ -183,7 +240,7 @@ var Page = React.createClass({displayName: 'Page',
 
 module.exports = Page;
 
-},{"./character-stats":1,"./header":3,"./row":6,"./weapon":7}],5:[function(require,module,exports){
+},{"../models/character":11,"./character-stats":1,"./damage-per-stat":2,"./header":6,"./row":9,"./weapon":10}],8:[function(require,module,exports){
 /** @jsx React.DOM */
 
 var Panel = React.createClass({displayName: 'Panel',
@@ -201,7 +258,7 @@ var Panel = React.createClass({displayName: 'Panel',
 
 module.exports = Panel;
 
-},{}],6:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 /** @jsx React.DOM */
 
 var Row = React.createClass({displayName: 'Row',
@@ -216,19 +273,12 @@ var Row = React.createClass({displayName: 'Row',
 
 module.exports = Row;
 
-},{}],7:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 /** @jsx React.DOM */
 
-function p(n) {
-  return (+n).toLocaleString();
-}
-
-function pr(n) {
-  return p((+n).toFixed(1));
-}
-
 var Panel = require('./panel'),
-    FormGroup = require('./form-group');
+    FormGroup = require('./form-group'),
+    FormControlStatic = require('./form-control-static');
 
 var Weapon = React.createClass({displayName: 'Weapon',
   render: function () {
@@ -245,7 +295,7 @@ var Weapon = React.createClass({displayName: 'Weapon',
             React.DOM.input({type: "text", id: 'weapon' + this.props.number + 'AttacksPerSecond', value: this.props.attacksPerSecond, className: "form-control"})
           ), 
           FormGroup({label: "Damage per Second"}, 
-            React.DOM.p({className: "form-control-static", title: 'Exact: ' + p(this.props.dps)}, pr(this.props.dps))
+            FormControlStatic({value: this.props.dps, precision: "1"})
           )
         )
       )
@@ -255,7 +305,155 @@ var Weapon = React.createClass({displayName: 'Weapon',
 
 module.exports = Weapon;
 
-},{"./form-group":2,"./panel":5}],8:[function(require,module,exports){
+},{"./form-control-static":4,"./form-group":5,"./panel":8}],11:[function(require,module,exports){
+var Character = (function () {
+  var stats = {
+    weapon1MinDamage: 1343,
+    weapon1MaxDamage: 1841,
+    weapon1AttacksPerSecond: 1.47,
+    weapon2MinDamage: 1287,
+    weapon2MaxDamage: 1763,
+    weapon2AttacksPerSecond: 1.4,
+    primaryAttribute: 7490,
+    attackSpeed: 46.4,
+    critChance: 41.5,
+    critDamage: 423,
+    passiveDamage: 8,
+    elementalDamage: 54,
+    eliteDamage: 0
+  };
+
+
+  function Character(state, stat, inc) {
+    if (state) {
+      this.loadFromState(state);
+      if (stat) {
+        this[stat] += inc || 1;
+      }
+    } else {
+      if (localStorageSupport()) {
+        this.loadFromLocalStorage();
+      }
+    }
+  }
+
+
+  Character.prototype.loadFromState = function (state) {
+    Object.keys(state).forEach(function (key) {
+      this[key] = state[key];
+    }, this);
+  };
+
+  Character.prototype.loadFromLocalStorage = function () {
+    var character = localStorage['character'];
+    if (character) {
+      this.loadFromState(JSON.parse(character));
+    }
+  };
+
+  Character.prototype.saveToLocalStorage = function () {
+    localStorage['character'] = JSON.stringify(this);
+  };
+
+
+  Object.keys(stats).forEach(function (key) {
+    var field = '_' + key;
+    Object.defineProperty(Character.prototype, key, {
+      get: function () {
+        if (field in this) {
+          return this[field];
+        } else {
+          return stats[key];
+        }
+      },
+      set: function (value) {
+        this[field] = +value;
+        if (localStorageSupport()) {
+          this.saveToLocalStorage();
+        }
+      }
+    });
+  });
+
+  Object.defineProperty(Character.prototype, 'weapon1DPS', {
+    get: function () {
+      return dps(
+        this.weapon1MinDamage,
+        this.weapon1MaxDamage,
+        this.weapon1AttacksPerSecond);
+    }
+  });
+
+  Object.defineProperty(Character.prototype, 'weapon2DPS', {
+    get: function () {
+      return dps(
+        this.weapon2MinDamage,
+        this.weapon2MaxDamage,
+        this.weapon2AttacksPerSecond);
+    }
+  });
+
+  Object.defineProperty(Character.prototype, 'attacksPerSecond', {
+    get: function () {
+      if (this.weapon2AttacksPerSecond > 0) {
+        var a = this.weapon1AttacksPerSecond,
+            b = this.weapon2AttacksPerSecond;
+        return (2 * a * b) / (a + b);
+      } else {
+        return this.weapon1AttacksPerSecond;
+      }
+    }
+  });
+
+  Object.defineProperty(Character.prototype, 'sheetDamage', {
+    get: function () {
+      var s = 1 + pct(this.primaryAttribute),
+          c = 1 + (pct(this.critChance) * pct(this.critDamage)),
+          r = (1 + pct(this.attackSpeed)) * this.attacksPerSecond,
+          a = (+this.weapon1MinDamage + +this.weapon1MaxDamage + +this.weapon2MinDamage + +this.weapon2MaxDamage) / (this.weapon2AttacksPerSecond ? 4.0 : 2.0),
+          m = 1 + pct(this.passiveDamage);
+      return s * c * r * a * m;
+    }
+  });
+
+  Object.defineProperty(Character.prototype, 'sheetElementalDamage', {
+    get: function () {
+      return this.sheetDamage * (1 + pct(this.elementalDamage));
+    }
+  });
+
+  Object.defineProperty(Character.prototype, 'eliteElementalDamage', {
+    get: function () {
+      return this.sheetElementalDamage * (1 + pct(this.eliteDamage));
+    }
+  });
+
+
+  function localStorageSupport() {
+    try {
+      localStorage.setItem('x', 'x');
+      localStorage.removeItem('x');
+      return 'JSON' in window && 'parse' in JSON && 'stringify' in JSON;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function dps(min, max, aps) {
+    return aps * (min + max) / 2.0;
+  }
+
+  function pct(n) {
+    return n * 0.01;
+  }
+
+
+  return Character;
+})();
+
+module.exports = Character;
+
+},{}],12:[function(require,module,exports){
 (function () {
   'use strict';
 
@@ -264,4 +462,4 @@ module.exports = Weapon;
     document.getElementById('container'));
 })();
 
-},{"./components/page":4}]},{},[8]);
+},{"./components/page":7}]},{},[12]);
